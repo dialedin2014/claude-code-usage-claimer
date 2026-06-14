@@ -31,7 +31,7 @@ python3 install.py
 ## Uninstall
 
 ```bash
-python3 uninstall.py
+curl -fsSL https://raw.githubusercontent.com/dialedin2014/claude-code-usage-claimer/master/uninstall.py | python3
 ```
 
 ## How it works
