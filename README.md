@@ -15,7 +15,7 @@ Claude Code (Pro/Max) enforces a 5-hour usage window. When the window resets, th
 ## Install (Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dialedin2014/claude-code-usage-claimer/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dialedin2014/claude-code-usage-claimer/master/install.sh | bash
 ```
 
 Or clone and run directly:
