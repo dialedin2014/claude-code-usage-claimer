@@ -101,22 +101,23 @@ def unpatch_settings() -> None:
         return
 
     changed = False
-    if "statusLine" in settings:
-        sl = settings["statusLine"]
-        if isinstance(sl, dict) and sl.get("command") == STATUSLINE_DEST:
+    sl = settings.get("statusLine")
+    if isinstance(sl, dict) and sl.get("command") == STATUSLINE_DEST:
+        del sl["command"]
+        if not sl:
             del settings["statusLine"]
-            changed = True
-        elif isinstance(sl, str) and sl == STATUSLINE_DEST:
-            del settings["statusLine"]
-            changed = True
+        changed = True
+    elif isinstance(sl, str) and sl == STATUSLINE_DEST:
+        del settings["statusLine"]
+        changed = True
 
     if changed:
         with open(SETTINGS_FILE, "w") as f:
             json.dump(settings, f, indent=2)
             f.write("\n")
-        ok("removed statusLine from settings.json")
+        ok("removed statusLine.command from settings.json")
     else:
-        info("statusLine in settings.json points elsewhere — not modified")
+        info("statusLine.command in settings.json not ours — not modified")
 
 
 def main() -> None:

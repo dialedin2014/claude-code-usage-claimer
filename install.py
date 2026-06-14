@@ -161,6 +161,28 @@ def install_statusline(reinstall: bool) -> None:
     ok(f"statusline.py installed to {STATUSLINE_DEST}")
 
 
+def check_settings_conflict() -> None:
+    if not os.path.isfile(SETTINGS_FILE):
+        return
+    try:
+        with open(SETTINGS_FILE) as f:
+            settings = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return
+    sl = settings.get("statusLine", {})
+    if not isinstance(sl, dict):
+        return
+    existing_cmd = sl.get("command")
+    if existing_cmd and existing_cmd != STATUSLINE_DEST:
+        die(
+            f"settings.json already has statusLine.command pointing to:\n"
+            f"    {existing_cmd}\n"
+            f"  This installer will not overwrite a statusLine hook it did not create.\n"
+            f"  Remove or relocate that hook first, then re-run the installer."
+        )
+    ok("settings.json statusLine is clear for install")
+
+
 def patch_settings(reinstall: bool) -> None:
     os.makedirs(CLAUDE_DIR, exist_ok=True)
     settings: dict = {}
@@ -171,14 +193,14 @@ def patch_settings(reinstall: bool) -> None:
         except (json.JSONDecodeError, OSError):
             info("Could not parse existing settings.json — starting fresh merge")
 
-    existing_cmd = (settings.get("statusLine") or {}).get("command") if isinstance(settings.get("statusLine"), dict) else None
-    if reinstall and existing_cmd == STATUSLINE_DEST:
-        note_overwrite("statusLine in settings.json")
-
-    # Merge statusLine.command; preserve everything else
     status_line = settings.get("statusLine", {})
     if not isinstance(status_line, dict):
         status_line = {}
+
+    if reinstall and status_line.get("command") == STATUSLINE_DEST:
+        note_overwrite("statusLine.command in settings.json")
+
+    # Set only the command field; leave all other statusLine fields untouched
     status_line["command"] = STATUSLINE_DEST
     settings["statusLine"] = status_line
 
@@ -302,6 +324,7 @@ def main() -> None:
     claude = find_claude()
     check_claude_version(claude)
     check_claude_auth(claude)
+    check_settings_conflict()
 
     step(2, "Installing scripts")
     install_lib_scripts(reinstall)
