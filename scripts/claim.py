@@ -52,8 +52,7 @@ def find_claude() -> str:
 
 
 def write_provisional_reset() -> int:
-    # 5 hours + 10 minutes buffer from now
-    ts = int(time.time()) + 5 * 3600 + 600
+    ts = int(time.time()) + 5 * 3600
     os.makedirs(os.path.dirname(RESET_CACHE), exist_ok=True)
     with open(RESET_CACHE, "w") as f:
         f.write(f"{ts}\n")

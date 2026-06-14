@@ -73,7 +73,7 @@ class TestWriteProvisionalReset(unittest.TestCase):
         ):
             ts = self.mod.write_provisional_reset()
         now = int(time.time())
-        self.assertGreater(ts, now + 5 * 3600)
+        self.assertGreaterEqual(ts, now + 5 * 3600)
         m().write.assert_called_once()
         written = m().write.call_args[0][0]
         self.assertEqual(written.strip(), str(ts))
