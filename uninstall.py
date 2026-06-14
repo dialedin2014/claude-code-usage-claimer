@@ -100,14 +100,14 @@ def unpatch_settings() -> None:
         info("Could not parse settings.json — skipping statusLine removal")
         return
 
-    if "ccucStatusLine" in settings:
-        del settings["ccucStatusLine"]
+    if "statusLine" in settings:
+        del settings["statusLine"]
         with open(SETTINGS_FILE, "w") as f:
             json.dump(settings, f, indent=2)
             f.write("\n")
-        ok("removed ccucStatusLine from settings.json")
+        ok("removed statusLine from settings.json")
     else:
-        info("ccucStatusLine not found in settings.json — skipping")
+        info("statusLine not found in settings.json — skipping")
 
 
 def main() -> None:

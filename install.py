@@ -171,15 +171,15 @@ def patch_settings(reinstall: bool) -> None:
         except (json.JSONDecodeError, OSError):
             info("Could not parse existing settings.json — starting fresh merge")
 
-    if reinstall and "ccucStatusLine" in settings:
-        note_overwrite("ccucStatusLine in settings.json")
+    if reinstall and "statusLine" in settings:
+        note_overwrite("statusLine in settings.json")
 
-    settings["ccucStatusLine"] = {"command": STATUSLINE_DEST}
+    settings["statusLine"] = {"type": "command", "command": STATUSLINE_DEST}
 
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f, indent=2)
         f.write("\n")
-    ok(f"settings.json patched (ccucStatusLine.command → {STATUSLINE_DEST})")
+    ok(f"settings.json patched (statusLine.command → {STATUSLINE_DEST})")
 
 
 def stop_timer() -> None:
@@ -300,7 +300,7 @@ def main() -> None:
     install_lib_scripts(reinstall)
     install_statusline(reinstall)
 
-    step(3, "Patching ~/.claude/settings.json (ccucStatusLine)")
+    step(3, "Patching ~/.claude/settings.json (statusLine)")
     patch_settings(reinstall)
 
     step(4, "Installing systemd user units")
