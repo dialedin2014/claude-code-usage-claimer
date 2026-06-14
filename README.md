@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/claude-claimer.png" width="600" alt="Claude Code Usage Claimer">
+</p>
+
 # claim-claude-window
 
 Automatically claims each Claude Code 5-hour usage window the moment it resets — whether or not you're actively using Claude Code.
