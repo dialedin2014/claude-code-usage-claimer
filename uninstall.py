@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """
 uninstall.py — remove everything install.py created
-
-Does NOT remove:
-  - ~/.claude/next-reset-time  (user data / state)
-  - ~/.claude/claim-claude-window.log  (user data / history)
-  - ~/.claude/settings.json  (user config — only the statusLine key is removed)
 """
 
 import json
@@ -18,6 +13,9 @@ LIB_DIR = os.path.expanduser("~/.local/lib/claim-claude-window")
 STATUSLINE_DEST = os.path.expanduser("~/.claude/statusline.py")
 SETTINGS_FILE = os.path.expanduser("~/.claude/settings.json")
 SYSTEMD_USER_DIR = os.path.expanduser("~/.config/systemd/user")
+CLAUDE_DIR = os.path.expanduser("~/.claude")
+RESET_CACHE = os.path.join(CLAUDE_DIR, "next-reset-time")
+LOG_FILE = os.path.join(CLAUDE_DIR, "claim-claude-window.log")
 UNIT_NAME = "claim-claude-window"
 
 
@@ -82,6 +80,15 @@ def remove_statusline() -> None:
         info(f"{STATUSLINE_DEST} not found — skipping")
 
 
+def remove_data_files() -> None:
+    for path in (RESET_CACHE, LOG_FILE):
+        if os.path.isfile(path):
+            os.remove(path)
+            ok(f"removed {path}")
+        else:
+            info(f"{path} not found — skipping")
+
+
 def unpatch_settings() -> None:
     if not os.path.isfile(SETTINGS_FILE):
         info("settings.json not found — skipping")
@@ -130,13 +137,10 @@ def main() -> None:
     print("\n[5] Patching settings.json")
     unpatch_settings()
 
-    print(
-        "\n\033[32mUninstall complete.\033[0m\n"
-        "\n"
-        "  The following files were NOT removed (user data):\n"
-        "    ~/.claude/next-reset-time\n"
-        "    ~/.claude/claim-claude-window.log\n"
-    )
+    print("\n[6] Removing data files")
+    remove_data_files()
+
+    print("\n\033[32mUninstall complete.\033[0m\n")
 
 
 if __name__ == "__main__":

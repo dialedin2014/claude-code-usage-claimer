@@ -127,9 +127,21 @@ def check_claude_auth(claude: str) -> None:
     ok("Claude Code is authenticated")
 
 
+# ── Reinstall detection ────────────────────────────────────────────────────────
+
+def is_reinstall() -> bool:
+    return os.path.isdir(LIB_DIR)
+
+
+def note_overwrite(path: str) -> None:
+    info(f"overwriting existing {path}")
+
+
 # ── File installation ──────────────────────────────────────────────────────────
 
-def install_lib_scripts() -> None:
+def install_lib_scripts(reinstall: bool) -> None:
+    if reinstall:
+        note_overwrite(LIB_DIR + "/")
     os.makedirs(LIB_DIR, exist_ok=True)
     for name in ("scheduler.py", "claim.py"):
         src = os.path.join(SCRIPTS_SRC, name)
@@ -139,7 +151,9 @@ def install_lib_scripts() -> None:
     ok(f"scripts installed to {LIB_DIR}/")
 
 
-def install_statusline() -> None:
+def install_statusline(reinstall: bool) -> None:
+    if reinstall and os.path.isfile(STATUSLINE_DEST):
+        note_overwrite(STATUSLINE_DEST)
     os.makedirs(CLAUDE_DIR, exist_ok=True)
     src = os.path.join(SCRIPTS_SRC, "statusline.py")
     shutil.copy2(src, STATUSLINE_DEST)
@@ -147,7 +161,7 @@ def install_statusline() -> None:
     ok(f"statusline.py installed to {STATUSLINE_DEST}")
 
 
-def patch_settings() -> None:
+def patch_settings(reinstall: bool) -> None:
     os.makedirs(CLAUDE_DIR, exist_ok=True)
     settings: dict = {}
     if os.path.isfile(SETTINGS_FILE):
@@ -156,6 +170,10 @@ def patch_settings() -> None:
                 settings = json.load(f)
         except (json.JSONDecodeError, OSError):
             info("Could not parse existing settings.json — starting fresh merge")
+
+    existing_cmd = (settings.get("statusLine") or {}).get("command") if isinstance(settings.get("statusLine"), dict) else None
+    if reinstall and existing_cmd == STATUSLINE_DEST:
+        note_overwrite("statusLine in settings.json")
 
     # Merge statusLine.command; preserve everything else
     status_line = settings.get("statusLine", {})
@@ -170,7 +188,21 @@ def patch_settings() -> None:
     ok(f"settings.json patched (statusLine.command → {STATUSLINE_DEST})")
 
 
-def install_systemd_units() -> None:
+def stop_timer() -> None:
+    subprocess.run(
+        ["systemctl", "--user", "stop", f"{UNIT_NAME}.timer"],
+        capture_output=True,
+    )
+    subprocess.run(
+        ["systemctl", "--user", "disable", f"{UNIT_NAME}.timer"],
+        capture_output=True,
+    )
+
+
+def install_systemd_units(reinstall: bool) -> None:
+    if reinstall:
+        note_overwrite(f"{UNIT_NAME}.timer and {UNIT_NAME}.service")
+        stop_timer()
     os.makedirs(SYSTEMD_USER_DIR, exist_ok=True)
     for name in (f"{UNIT_NAME}.timer", f"{UNIT_NAME}.service"):
         src = os.path.join(SYSTEMD_SRC, name)
@@ -259,7 +291,11 @@ def print_next_claim() -> None:
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    print("\nclaim-claude-window installer\n" + "=" * 30)
+    reinstall = is_reinstall()
+    header = "claim-claude-window reinstaller" if reinstall else "claim-claude-window installer"
+    print(f"\n{header}\n" + "=" * len(header))
+    if reinstall:
+        info("Previous installation detected — overwriting.")
 
     step(1, "Checking prerequisites")
     check_linux()
@@ -268,14 +304,14 @@ def main() -> None:
     check_claude_auth(claude)
 
     step(2, "Installing scripts")
-    install_lib_scripts()
-    install_statusline()
+    install_lib_scripts(reinstall)
+    install_statusline(reinstall)
 
     step(3, "Patching ~/.claude/settings.json")
-    patch_settings()
+    patch_settings(reinstall)
 
     step(4, "Installing systemd user units")
-    install_systemd_units()
+    install_systemd_units(reinstall)
 
     step(5, "Enabling systemd timer")
     check_linger()

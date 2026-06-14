@@ -12,24 +12,6 @@ Claude Code (Pro/Max) enforces a 5-hour usage window. When the window resets, th
 
 `claim-claude-window` fixes this by running `claude -p "hey"` 45 seconds after the window resets, opening the next window immediately without manual intervention.
 
-## How it works
-
-```
-Interactive session
-  └─ assistant response received
-       └─ statusline.py → writes actual reset time to ~/.claude/next-reset-time
-
-Every 10 minutes (systemd timer)
-  └─ scheduler.py → reads next-reset-time
-       └─ schedules claim job at reset_time + 45s (if not already scheduled)
-
-At reset_time + 45s (one-shot systemd unit)
-  └─ claim.py → runs claude -p "hey"
-       └─ writes provisional next reset (now + 5h) to cache
-```
-
-The statusline value always wins when it arrives — it overwrites the provisional value on the next interactive turn.
-
 ## Install (Linux)
 
 ```bash
@@ -51,6 +33,24 @@ python3 install.py
 ```bash
 python3 uninstall.py
 ```
+
+## How it works
+
+```
+Interactive session
+  └─ assistant response received
+       └─ statusline.py → writes actual reset time to ~/.claude/next-reset-time
+
+Every 10 minutes (systemd timer)
+  └─ scheduler.py → reads next-reset-time
+       └─ schedules claim job at reset_time + 45s (if not already scheduled)
+
+At reset_time + 45s (one-shot systemd unit)
+  └─ claim.py → runs claude -p "hey"
+       └─ writes provisional next reset (now + 5h) to cache
+```
+
+The statusline value always wins when it arrives — it overwrites the provisional value on the next interactive turn.
 
 ## Status bar
 
@@ -110,8 +110,8 @@ The provisional value (`now + 5h`) is written immediately after each successful 
 | `~/.config/systemd/user/claim-claude-window.timer` | 10-min recurring timer |
 | `~/.config/systemd/user/claim-claude-window.service` | Timer service unit |
 | `~/.claude/settings.json` | Patched with `statusLine.command` |
-| `~/.claude/next-reset-time` | Reset time cache (not removed on uninstall) |
-| `~/.claude/claim-claude-window.log` | Log (not removed on uninstall) |
+| `~/.claude/next-reset-time` | Reset time cache |
+| `~/.claude/claim-claude-window.log` | Log |
 
 ## Notes
 
