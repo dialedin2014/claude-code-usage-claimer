@@ -109,7 +109,7 @@ The provisional value (`now + 5h`) is written immediately after each successful 
 | `~/.claude/statusline.py` | Status bar hook |
 | `~/.config/systemd/user/claim-claude-window.timer` | 10-min recurring timer |
 | `~/.config/systemd/user/claim-claude-window.service` | Timer service unit |
-| `~/.claude/settings.json` | Patched with `statusLine.command` |
+| `~/.claude/settings.json` | Patched with `ccucStatusLine.command` |
 | `~/.claude/next-reset-time` | Reset time cache |
 | `~/.claude/claim-claude-window.log` | Log |
 

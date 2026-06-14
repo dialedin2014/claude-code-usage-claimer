@@ -161,28 +161,6 @@ def install_statusline(reinstall: bool) -> None:
     ok(f"statusline.py installed to {STATUSLINE_DEST}")
 
 
-def check_settings_conflict() -> None:
-    if not os.path.isfile(SETTINGS_FILE):
-        return
-    try:
-        with open(SETTINGS_FILE) as f:
-            settings = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return
-    sl = settings.get("statusLine", {})
-    if not isinstance(sl, dict):
-        return
-    existing_cmd = sl.get("command")
-    if existing_cmd and existing_cmd != STATUSLINE_DEST:
-        die(
-            f"settings.json already has statusLine.command pointing to:\n"
-            f"    {existing_cmd}\n"
-            f"  This installer will not overwrite a statusLine hook it did not create.\n"
-            f"  Remove or relocate that hook first, then re-run the installer."
-        )
-    ok("settings.json statusLine is clear for install")
-
-
 def patch_settings(reinstall: bool) -> None:
     os.makedirs(CLAUDE_DIR, exist_ok=True)
     settings: dict = {}
@@ -193,21 +171,15 @@ def patch_settings(reinstall: bool) -> None:
         except (json.JSONDecodeError, OSError):
             info("Could not parse existing settings.json — starting fresh merge")
 
-    status_line = settings.get("statusLine", {})
-    if not isinstance(status_line, dict):
-        status_line = {}
+    if reinstall and "ccucStatusLine" in settings:
+        note_overwrite("ccucStatusLine in settings.json")
 
-    if reinstall and status_line.get("command") == STATUSLINE_DEST:
-        note_overwrite("statusLine.command in settings.json")
-
-    # Set only the command field; leave all other statusLine fields untouched
-    status_line["command"] = STATUSLINE_DEST
-    settings["statusLine"] = status_line
+    settings["ccucStatusLine"] = {"command": STATUSLINE_DEST}
 
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f, indent=2)
         f.write("\n")
-    ok(f"settings.json patched (statusLine.command → {STATUSLINE_DEST})")
+    ok(f"settings.json patched (ccucStatusLine.command → {STATUSLINE_DEST})")
 
 
 def stop_timer() -> None:
@@ -324,13 +296,11 @@ def main() -> None:
     claude = find_claude()
     check_claude_version(claude)
     check_claude_auth(claude)
-    check_settings_conflict()
-
     step(2, "Installing scripts")
     install_lib_scripts(reinstall)
     install_statusline(reinstall)
 
-    step(3, "Patching ~/.claude/settings.json")
+    step(3, "Patching ~/.claude/settings.json (ccucStatusLine)")
     patch_settings(reinstall)
 
     step(4, "Installing systemd user units")

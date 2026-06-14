@@ -24,7 +24,7 @@ rate_limits is absent before the first API response and absent for
 non-Pro/Max subscribers — the script handles that gracefully.
 
 Configure in ~/.claude/settings.json:
-  { "statusLine": { "command": "/path/to/statusline.py" } }
+  { "ccucStatusLine": { "command": "/path/to/statusline.py" } }
 """
 
 import json
