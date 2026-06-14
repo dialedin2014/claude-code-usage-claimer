@@ -1,0 +1,8 @@
+[Unit]
+Description=claim-claude-window scheduler
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 %h/.local/lib/claim-claude-window/scheduler.py
+StandardOutput=append:%h/.claude/claim-claude-window.log
+StandardError=append:%h/.claude/claim-claude-window.log
